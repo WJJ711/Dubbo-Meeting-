@@ -17,6 +17,7 @@
         <module>guns-api</module>
         <module>guns-user</module>
         <module>guns-film</module>
+        <module>guns-cinema</module>
     </modules>
 
     <parent>
@@ -228,7 +229,6 @@
                 <scope>provided</scope>
             </dependency>
 
-
             <!--我加入的结束-->
         </dependencies>
     </dependencyManagement>
@@ -245,12 +245,6 @@
             <groupId>org.apache.dubbo</groupId>
             <artifactId>dubbo</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.stylefeng</groupId>
-            <artifactId>guns-api</artifactId>
-            <version>${guns.version}</version>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.apache.curator/curator-recipes -->
         <dependency>
             <groupId>org.apache.curator</groupId>

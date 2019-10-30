@@ -234,7 +234,7 @@ public class FilmController {
         //组织成返回值
         filmDetail.setInfo04(infoRequestVO);
 
-        return ResponseVo.success("http://img.wjjlucky.top",filmDetail);
+        return ResponseVo.success(IMG_PRE,filmDetail);
     }
 
 }

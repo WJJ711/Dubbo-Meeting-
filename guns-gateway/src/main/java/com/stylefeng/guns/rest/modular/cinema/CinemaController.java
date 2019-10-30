@@ -3,8 +3,10 @@ package com.stylefeng.guns.rest.modular.cinema;
 import com.baomidou.mybatisplus.plugins.Page;
 import com.stylefeng.guns.api.cinema.CinemaServiceAPI;
 import com.stylefeng.guns.api.cinema.vo.*;
+import com.stylefeng.guns.api.order.OrderServiceAPI;
 import com.stylefeng.guns.rest.modular.cinema.vo.CinemaConditionResponseVO;
 import com.stylefeng.guns.rest.modular.cinema.vo.CinemaFieldResponseVO;
+import com.stylefeng.guns.rest.modular.cinema.vo.CinemaFieldsResponseVO;
 import com.stylefeng.guns.rest.modular.cinema.vo.CinemaListResponseVO;
 import com.stylefeng.guns.rest.modular.vo.ResponseVo;
 import lombok.extern.slf4j.Slf4j;
@@ -19,10 +21,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/cinema/")
 public class CinemaController {
-    private static final String IMG_PRE="http://img.wjjlucky.top";
-    @Reference(check = false)
+    private static final String IMG_PRE="http://img.wjjlucky.top/";
+
+    @Reference(check = false,cache = "lru",connections = 10)
     private CinemaServiceAPI cinemaServiceAPI;
 
+    @Reference(check = false)
+    private OrderServiceAPI orderServiceAPI;
     @RequestMapping("getCinemas")
     public ResponseVo getCinema(CinemaQueryVO cinemaQueryVO){
         //按照五个条件进行筛选
@@ -41,7 +46,9 @@ public class CinemaController {
             return ResponseVo.appFail("查询影院列表失败");
         }
     }
-
+    /*
+    热点数据->放缓存
+     */
     @RequestMapping("getCondition")
     public ResponseVo getCondition(CinemaQueryVO cinemaQueryVO){
         try {
@@ -64,10 +71,12 @@ public class CinemaController {
         try {
             CinemaInfoVO cinemaInfoById = cinemaServiceAPI.getCinemaInfoById(cinemaId);
             List<FilmInfoVO> filmInfoByCinemaId = cinemaServiceAPI.getFilmInfoByCinemaId(cinemaId);
-            CinemaFieldResponseVO cinemaFieldResponseVO = new CinemaFieldResponseVO();
-            cinemaFieldResponseVO.setCinemaInfoVO(cinemaInfoById);
-            cinemaFieldResponseVO.setFilmList(filmInfoByCinemaId);
-            return ResponseVo.success(IMG_PRE,cinemaFieldResponseVO);
+
+            CinemaFieldsResponseVO cinemaFieldsResponseVO = new CinemaFieldsResponseVO();
+            cinemaFieldsResponseVO.setCinemaInfoVO(cinemaInfoById);
+            cinemaFieldsResponseVO.setFilmList(filmInfoByCinemaId);
+
+            return ResponseVo.success(IMG_PRE,cinemaFieldsResponseVO);
         } catch (Exception e) {
             log.error("获取播放场次失败",e);
             return ResponseVo.appFail("获取播放场次失败");
@@ -77,8 +86,21 @@ public class CinemaController {
 
     @RequestMapping(value = "getFieldInfo",method = RequestMethod.POST)
     public ResponseVo getFieldInfo(Integer cinemaId,Integer fieldId){
-
-        return null;
+        try {
+            CinemaInfoVO cinemaInfoById = cinemaServiceAPI.getCinemaInfoById(cinemaId);
+            FilmInfoVO filmInfoByFieldId = cinemaServiceAPI.getFilmInfoByFieldId(fieldId);
+            HallInfoVO filmFiledInfo = cinemaServiceAPI.getFilmFiledInfo(fieldId);
+            //对接订单模块
+            filmFiledInfo.setSoldSeats(orderServiceAPI.getSoldSeatsByFieldId(fieldId));
+            CinemaFieldResponseVO cinemaFieldResponseVO = new CinemaFieldResponseVO();
+            cinemaFieldResponseVO.setCinemaInfo(cinemaInfoById);
+            cinemaFieldResponseVO.setFilmInfo(filmInfoByFieldId);
+            cinemaFieldResponseVO.setHallInfo(filmFiledInfo);
+            return ResponseVo.success(IMG_PRE,cinemaFieldResponseVO);
+        } catch (Exception e) {
+            log.error("获取场次详细信息失败",e);
+            return ResponseVo.appFail("获取场次详细信息失败");
+        }
     }
 
 }

@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.annotation.Service;
+import org.apache.dubbo.rpc.RpcContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -176,6 +177,42 @@ public class OrderServiceImpl2018 implements OrderServiceAPI {
         }else {
 
             return moocOrder2018TMapper.getSoldSeatsByFieldId(fieldId);
+        }
+    }
+
+    @Override
+    public OrderVO getOrderInfoById(String orderId) {
+        OrderVO orderInfoById = moocOrder2018TMapper.getOrderInfoById(orderId);
+        return orderInfoById;
+    }
+
+    @Override
+    public boolean paySuccess(String orderId) {
+        String userId = RpcContext.getContext().getAttachment("userId");
+        log.info("OrderServiceImpl2018->paySuccess->userId:"+userId);
+        MoocOrder2018T moocOrder2018T= new MoocOrder2018T();
+        moocOrder2018T.setUuid(orderId);
+        moocOrder2018T.setOrderStatus(1);
+
+        Integer integer = moocOrder2018TMapper.updateById(moocOrder2018T);
+        if (integer>=1){
+            return true;
+        }else {
+            return false;
+        }
+    }
+
+    @Override
+    public boolean payFail(String orderId) {
+        MoocOrder2018T moocOrder2018T= new MoocOrder2018T();
+        moocOrder2018T.setUuid(orderId);
+        moocOrder2018T.setOrderStatus(2);
+
+        Integer integer = moocOrder2018TMapper.updateById(moocOrder2018T);
+        if (integer>=1){
+            return true;
+        }else {
+            return false;
         }
     }
 }
